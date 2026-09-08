@@ -18,6 +18,7 @@ Questo repository contiene una versione personalizzata di JARVIS basata su Pytho
 - Undo per molte operazioni reversibili e conferma umana per spegnimento, riavvio e Wi-Fi.
 - Plugin estendibili tramite un singolo file Python nella cartella `plugins/`.
 - Dashboard web locale per il controllo remoto tramite token temporanei e connessione cifrata.
+- Accessibilita opzionale: screen reader, OCR locale e scorciatoie globali configurabili.
 
 ## Architettura
 
@@ -101,6 +102,18 @@ python -m compileall .
 ```
 
 Le prove GUI su Steam, browser e messaggistica richiedono ancora un ambiente interattivo reale. L'OCR locale richiede sia il pacchetto Python `pytesseract` sia l'eseguibile Tesseract installato nel sistema.
+
+## Accessibilita
+
+Il modulo [core/accessibility.py](core/accessibility.py) aggiunge un ponte opt-in per la lettura dello schermo:
+
+- usa l'OCR locale su tutto lo schermo o su una regione `(x, y, larghezza, altezza)`;
+- invia il testo al TTS gia configurato da JARVIS oppure a `pyttsx3` come fallback offline;
+- usa `nvdaControllerClient.dll` quando NVDA e installato su Windows;
+- registra `Ctrl+Alt+R` per leggere lo schermo e `Ctrl+Alt+S` per lo stato solo dopo una chiamata esplicita a `start_hotkeys()`;
+- rimuove le scorciatoie con `stop_hotkeys()`.
+
+Le hotkey globali non vengono attivate automaticamente all'avvio. Per NVDA e necessario rendere disponibile `nvdaControllerClient.dll`; per l'OCR servono `pytesseract` e l'eseguibile Tesseract.
 
 ## Documentazione tecnica
 

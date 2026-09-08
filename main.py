@@ -88,6 +88,7 @@ from core                      import audio_devices
 from core.guardrails           import (
     install_subprocess_guards, require_policy_file, append_rule,
 )
+from core.accessibility        import ocr_screen_region
 
 install_subprocess_guards()
 
@@ -299,6 +300,25 @@ TOOL_DECLARATIONS = [
                 "text":  {"type": "STRING", "description": "The question or instruction about the captured image"}
             },
             "required": ["text"]
+        }
+    },
+    {
+        "name": "accessibility_read_screen",
+        "description": (
+            "Reads visible interface text aloud using local OCR. Use this when the user asks "
+            "for an accessible text reading of the screen, buttons, labels, or a screen region. "
+            "This does not send the screenshot to an external vision model."
+        ),
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "language": {"type": "STRING", "description": "Tesseract language code, e.g. ita or eng"},
+                "x": {"type": "INTEGER", "description": "Optional region left coordinate"},
+                "y": {"type": "INTEGER", "description": "Optional region top coordinate"},
+                "width": {"type": "INTEGER", "description": "Optional region width"},
+                "height": {"type": "INTEGER", "description": "Optional region height"},
+            },
+            "required": []
         }
     },
     {
@@ -1166,6 +1186,27 @@ class JarvisLive:
                         f"telling them you are looking at their {_stall} right now. "
                         f"Do NOT describe or guess content — the actual image arrives in the NEXT message."
                     )
+
+            elif name == "accessibility_read_screen":
+                region_values = [args.get(key) for key in ("x", "y", "width", "height")]
+                if any(value is not None for value in region_values):
+                    if not all(isinstance(value, int) and value >= 0 for value in region_values):
+                        result = "For a screen region, provide non-negative integer x, y, width, and height."
+                    else:
+                        bbox = tuple(region_values)
+                        result = await loop.run_in_executor(
+                            None,
+                            lambda: ocr_screen_region(
+                                bbox=bbox,
+                                language=args.get("language", "ita"),
+                            ),
+                        )
+                else:
+                    result = await loop.run_in_executor(
+                        None,
+                        lambda: ocr_screen_region(language=args.get("language", "ita")),
+                    )
+                result = result or "No readable text was detected on the screen."
 
             elif name == "close_camera":
                 self.ui.stop_camera_stream()

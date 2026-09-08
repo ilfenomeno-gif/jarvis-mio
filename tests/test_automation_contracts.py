@@ -19,9 +19,49 @@ from core.prompt_router import PROMPT_REPOSITORY_URL, PromptRouter
 from actions.file_controller import _file_memory_key, _resolve_file_target, read_file
 from actions.computer_control import _screen_find
 from actions.youtube_video import _handle_play
+from core.accessibility import AccessibilityController
 
 
 class AutomationContracts(unittest.TestCase):
+    def test_accessibility_screen_reader_uses_injected_speech_backend(self):
+        spoken = []
+        controller = AccessibilityController(
+            speech=type("Speech", (), {"speak": lambda self, text: spoken.append(text)})(),
+            ocr=lambda **kwargs: "Testo visibile",
+        )
+        self.assertEqual(controller.read_screen(), "Testo visibile")
+        self.assertEqual(spoken, ["Analisi dello schermo in corso.", "Testo visibile"])
+
+    def test_accessibility_empty_screen_is_reported(self):
+        spoken = []
+        controller = AccessibilityController(
+            speech=type("Speech", (), {"speak": lambda self, text: spoken.append(text)})(),
+            ocr=lambda **kwargs: "",
+        )
+        self.assertEqual(controller.read_screen(), "")
+        self.assertEqual(spoken[-1], "Nessun testo rilevato sullo schermo.")
+
+    def test_accessibility_hotkeys_are_opt_in_and_removable(self):
+        class FakeKeyboard:
+            def __init__(self):
+                self.added = []
+                self.removed = []
+
+            def add_hotkey(self, combination, callback):
+                self.added.append((combination, callback))
+
+            def remove_hotkey(self, combination):
+                self.removed.append(combination)
+
+        fake = FakeKeyboard()
+        controller = AccessibilityController()
+        with patch.dict("sys.modules", {"keyboard": fake}):
+            self.assertIsNone(controller._keyboard)
+            controller.start_hotkeys()
+            controller.stop_hotkeys()
+        self.assertEqual([item[0] for item in fake.added], ["ctrl+alt+r", "ctrl+alt+s"])
+        self.assertEqual(fake.removed, ["ctrl+alt+r", "ctrl+alt+s"])
+
     def test_credential_trigger_is_safe_and_explicit(self):
         root = Path(__file__).resolve().parents[1]
         prompt = (root / "core" / "prompt.txt").read_text(encoding="utf-8")
