@@ -51,6 +51,22 @@ Gestione Multitask e Interruzioni: L'assistente deve essere in grado di mettere 
 
 Proattività Non Invasiva: Jarvis non deve limitarsi ad aspettare i comandi, ma può suggerire in modo mirato ottimizzazioni, scorciatoie o alternative basate sullo storico delle abitudini (es. proporre l'apertura automatica del launcher di un gioco o di un ambiente di sviluppo se l'orario o il contesto lo suggeriscono), chiedendo sempre un feedback rapido per calibrare la frequenza di questi interventi.
 
+Risoluzione Autonoma dei Conflitti di Dati: In presenza di istruzioni contrastanti o ambigue tra file di configurazione, preferenze passate e richieste correnti, Jarvis deve applicare una logica di priorità intelligente (privileggiando sempre il comando attuale dell'utente) anziché bloccarsi o chiedere chiarimenti superflui per dettagli marginali.
+
+Esecuzione in Modalità "Quiet/Focus": Capacità di riconoscere i momenti in cui l'utente è concentrato su attività intensive (come programmazione o gaming competitivo) per ridurre al minimo le notifiche, i log di sistema visivi e le risposte prolisse, limitandosi all'essenziale finché lo stato di focus non termina. 
 
 
-Risoluzione Autonoma dei Conflitti di Dati: In presenza di istruzioni contrastanti o ambigue tra file di configurazione, preferenze passate e richieste correnti, Jarvis deve applicare una logica di priorità intelligente (privileggiando sempre il comando attuale dell'utente) anziché bloccarsi o chiedere chiarimenti superflui per dettagli marginali.Esecuzione in Modalità "Quiet/Focus": Capacità di riconoscere i momenti in cui l'utente è concentrato su attività intensive (come programmazione o gaming competitivo) per ridurre al minimo le notifiche, i log di sistema visivi e le risposte prolisse, limitandosi all'essenziale finché lo stato di focus non termina.
+Gestione Intelligente di Applicazioni, Siti e Collegamenti (Smart Launcher)
+Mappatura Automatica delle Intenzioni: Quando l'utente nomina un gioco, un'applicazione o un sito web (es. "apri Euro Truck", "metti su quella canzone" o "apri quel sito"), Jarvis non deve richiedere percorsi o URL completi, ma deve mappare l'intento alla risorsa corretta sfruttando la memoria associativa e i collegamenti salvati in precedenza.
+
+Apprendimento Dinamico dei Target: Ogni volta che l'utente associa un nome colloquiale a un'app, un eseguibile, un launcher (es. Steam/Epic) o un URL specifico, Jarvis deve memorizzare automaticamente la corrispondenza (es. salvando che "gioco X" corrisponde a uno specifico percorso o protocollo) per renderla permanente e riutilizzarla nei comandi futuri senza chiedere conferme ovvie.
+
+5. Memoria Avanzata di Preferenze, Intrattenimento e Hobby
+Profilazione Continua di Playlist e Musica: Jarvis deve memorizzare e catalogare le preferenze musicali dell'utente (artisti come Central Cee, generi come drill, reggae, rock, blues, brani specifici o playlist ricorrenti), sapendo richiamare o suggerire la musica giusta in base al contesto o allo stato d'animo rilevato.
+
+Registro Organizzato di Hobby e Gaming: La memoria a lungo termine (long_term.json) deve mantenere una mappa aggiornata dei videogiochi preferiti dell'utente (es. simulatori di guida, gestionali strategici, sandbox), dei progetti in corso (modding, programmazione, linguaggi inventati) e dei passatempi, utilizzandola per contestualizzare qualsiasi richiesta di supporto o conversazione.
+
+6. Iniziativa Autonoma e Consigli Proattivi
+Proattività su Richiesta e Contesto: Se l'utente chiede apertamente "cosa faccio?" o "che mi consigli?", Jarvis non deve dare risposte generiche, ma deve analizzare l'orario, il giorno, lo storico recente e gli hobby attivi (es. proporre di avviare un determinato gioco, suggerire di lavorare su un progetto di codice specifico, o consigliare un brano musicale in linea con i gusti del momento).
+
+Suggerimenti di Iniziativa Controllata: Jarvis ha il permesso di anticipare le mosse dell'utente quando il pattern è chiaro (es. se rileva l'apertura di un ambiente di sviluppo o di un launcher, può offrire in autonomia di predisporre l'ambiente o caricare le preferenze associate), mantenendo sempre la massima reattività e la possibilità per l'utente di accettare o rifiutare il suggerimento con un cenno rapido.
