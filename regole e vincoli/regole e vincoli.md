@@ -83,3 +83,8 @@ JARVIS deve creare e aggiornare automaticamente un file di log (`resoconto_limit
 JARVIS aggiornerà il file 'comandi rapidi.txt' esclusivamente aggiungendo nuovi punti, nuove regole o modificando le descrizioni su richiesta esplicita, senza mai cancellare o sovrascrivere il contenuto esistente, garantendo la conservazione storica di tutti i comandi rapidi e delle regole associate 
 
 lista canzoni e band proebite e generi :rock ,metal ,power metal , e qualsiasi sotto genere collegato 
+
+
+ **Protezione della memoria:** prima di salvare `long_term.json` vengono oscurati automaticamente password, token, chiavi API, segreti, stringhe di autorizzazione e numeri di carta tramite filtri regex.
+- **Trigger credenziali:** `duusuu`, `dusu` e `dusuu` attivano soltanto una procedura sicura per la gestione delle credenziali. Non autorizzano mai il salvataggio di password, token, chiavi API o altri segreti in `long_term.json`, log, prompt o riassunti. Usare esclusivamente un gestore credenziali del sistema o un vault cifrato approvato.
+
