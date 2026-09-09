@@ -62,6 +62,23 @@ class AutomationContracts(unittest.TestCase):
         self.assertEqual([item[0] for item in fake.added], ["ctrl+alt+r", "ctrl+alt+s"])
         self.assertEqual(fake.removed, ["ctrl+alt+r", "ctrl+alt+s"])
 
+    @patch("pyautogui.write")
+    @patch("pyautogui.click")
+    @patch("actions.screen_processor.find_text")
+    def test_accessibility_click_and_type_requires_ocr_match(self, find_text, click, write):
+        find_text.return_value = type("Match", (), {"center": (120, 240)})()
+        controller = AccessibilityController(ocr=lambda **kwargs: "unused")
+        self.assertTrue(controller.click_and_type("Search", "hello"))
+        click.assert_called_once_with(120, 240)
+        write.assert_called_once_with("hello")
+
+    @patch("actions.screen_processor.find_text", return_value=None)
+    @patch("pyautogui.click")
+    def test_accessibility_click_and_type_does_not_click_without_match(self, click, find_text):
+        controller = AccessibilityController(ocr=lambda **kwargs: "unused")
+        self.assertFalse(controller.click_and_type("Missing", "hello"))
+        click.assert_not_called()
+
     def test_credential_trigger_is_safe_and_explicit(self):
         root = Path(__file__).resolve().parents[1]
         prompt = (root / "core" / "prompt.txt").read_text(encoding="utf-8")
