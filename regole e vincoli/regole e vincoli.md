@@ -82,6 +82,4 @@ JARVIS deve creare e aggiornare automaticamente un file di log (`resoconto_limit
 
 JARVIS aggiornerà il file 'comandi rapidi.txt' esclusivamente aggiungendo nuovi punti, nuove regole o modificando le descrizioni su richiesta esplicita, senza mai cancellare o sovrascrivere il contenuto esistente, garantendo la conservazione storica di tutti i comandi rapidi e delle regole associate 
 
-lista canzoni e band proebite e generi :
-
-rock ,metal ,power metal , e qualsiasi sotto genere collegato 
+lista canzoni e band proebite e generi :rock ,metal ,power metal , e qualsiasi sotto genere collegato 
