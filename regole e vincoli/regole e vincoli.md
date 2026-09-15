@@ -15,8 +15,7 @@ Ogni nuova regola fornita dall'utente deve essere aggiunta a questo file nel per
 
 - **Whitelisting rigido dei comandi:** l'assistente non deve usare una shell bash/terminale con permessi illimitati. I comandi di sistema passano da una whitelist e da una sanitizzazione preventiva. Sono sempre bloccati `rm -rf`, `sudo`, `chmod`, `curl | bash`, `Invoke-WebRequest`, `Remove-Item -Recurse`, `diskpart`, `format-volume` e comandi equivalenti. `shell=True` e' disabilitato.
 
-- **Protezione della memoria:** prima di salvare `long_term.json` vengono oscurati automaticamente password, token, chiavi API, segreti, stringhe di autorizzazione e numeri di carta tramite filtri regex.
-- **Trigger credenziali:** `duusuu`, `dusu` e `dusuu` attivano soltanto una procedura sicura per la gestione delle credenziali. Non autorizzano mai il salvataggio di password, token, chiavi API o altri segreti in `long_term.json`, log, prompt o riassunti. Usare esclusivamente un gestore credenziali del sistema o un vault cifrato approvato.
+-
 
 ### 2. Vincoli di rete e sicurezza web
 

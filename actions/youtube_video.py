@@ -285,7 +285,19 @@ def _handle_play(parameters: dict, player) -> str:
         return "Please tell me what you'd like to watch, sir."
 
     if player:
-        player.write_log(f"[YouTube] Searching: {query}")
+        player.write_log(f"[YouTube] Searching/Playing: {query}")
+
+    if _is_valid_youtube_url(query):
+        print(f"[YouTube] ▶️ Direct URL detected: {query}")
+        if _open_url(query):
+            if _PYAUTOGUI:
+                import threading
+                def force_play():
+                    time.sleep(5)
+                    pyautogui.press('space')
+                threading.Thread(target=force_play, daemon=True).start()
+            return f"Opening YouTube URL directly: {query}"
+        return f"Could not open the YouTube URL: {query}"
 
     print(f"[YouTube] 🔍 Scraping first non-Shorts video for: {query}")
 

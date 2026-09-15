@@ -155,6 +155,29 @@ class AccessibilityController:
             self.speak("Nessun testo rilevato sullo schermo.")
         return text
 
+    def click_and_type(self, target_text: str, text_to_type: str) -> bool:
+        """Find visible text with OCR, click its center, and type only on success."""
+        target = str(target_text).strip()
+        if not target:
+            self.speak("Specificare il testo dell'elemento da cercare.")
+            return False
+        self.speak(f"Cerco l'elemento {target} sullo schermo.")
+        try:
+            from actions.screen_processor import find_text
+            import pyautogui
+
+            match = find_text(target)
+            if match is None:
+                self.speak(f"Non ho trovato {target} sullo schermo.")
+                return False
+            pyautogui.click(*match.center)
+            pyautogui.write(str(text_to_type))
+        except Exception as exc:
+            self.speak(f"Interazione con {target} non disponibile: {exc}")
+            return False
+        self.speak("Fatto.")
+        return True
+
     def start_hotkeys(
         self,
         read_combination: str = "ctrl+alt+r",

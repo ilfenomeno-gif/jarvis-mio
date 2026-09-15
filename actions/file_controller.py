@@ -680,6 +680,31 @@ def get_file_info(path: str, name: str = "") -> str:
     except Exception as e:
         return f"Could not get file info: {e}"
 
+
+def open_file(path: str, name: str = "") -> str:
+    try:
+        base   = _resolve_path(path)
+        target = (base / name) if name else base
+        if not _is_safe_path(target):
+            return f"Access denied: {target}"
+        if not target.exists():
+            return f"File not found: {target.name}"
+        if not target.is_file():
+            return f"Not a file: {target.name}"
+
+        if _OS == "Windows":
+            os.startfile(str(target))
+        elif _OS == "Darwin":
+            import subprocess
+            subprocess.Popen(["open", str(target)])
+        else:
+            import subprocess
+            subprocess.Popen(["xdg-open", str(target)])
+            
+        return f"Opened file: {target.name}"
+    except Exception as e:
+        return f"Could not open file: {e}"
+
 def file_controller(
     parameters: dict = None,
     response=None,
@@ -748,6 +773,9 @@ def file_controller(
 
         elif action == "info":
             return get_file_info(path, name=name)
+
+        elif action == "open":
+            return open_file(path, name=name)
 
         else:
             return f"Unknown action: '{action}'"

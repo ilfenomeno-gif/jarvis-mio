@@ -693,7 +693,18 @@ class _BrowserSession:
             await el.type(text, delay=50)
             return "Text typed."
         except Exception as e:
-            return f"Type error: {e}"
+            try:
+                import pyautogui
+                import pyperclip
+                import asyncio
+                pyperclip.copy(text)
+                await asyncio.sleep(0.5)
+                pyautogui.hotkey('ctrl', 'v') if _OS == "Windows" or _OS == "Linux" else pyautogui.hotkey('command', 'v')
+                return "Text typed via clipboard fallback."
+            except ImportError:
+                return f"Type error: {e}. Fallback failed: pyautogui/pyperclip not installed."
+            except Exception as fallback_e:
+                return f"Type error: {e}. Fallback error: {fallback_e}"
 
     async def scroll(self, direction: str = "down", amount: int = 500) -> str:
         page = await self._get_page()

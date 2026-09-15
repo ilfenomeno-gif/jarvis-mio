@@ -11,6 +11,11 @@ def get_base_dir():
         return Path(sys.executable).parent
     return Path(__file__).resolve().parent.parent
 
+def _get_python_exe() -> str:
+    exe = sys.executable
+    if exe.lower().endswith("pythonw.exe"):
+        return exe[:-11] + "python.exe"
+    return exe
 
 BASE_DIR         = get_base_dir()
 API_CONFIG_PATH  = BASE_DIR / "config" / "api_keys.json"
@@ -242,7 +247,7 @@ def _install_dependencies(dependencies: list[str], project_dir: Path) -> str:
     for dep in dependencies:
         pkg_name = re.split(r"[>=<!]", dep)[0].strip()
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "show", pkg_name],
+            [_get_python_exe(), "-m", "pip", "show", pkg_name],
             capture_output=True, text=True
         )
         if result.returncode != 0:
@@ -256,7 +261,7 @@ def _install_dependencies(dependencies: list[str], project_dir: Path) -> str:
     print(f"[DevAgent] 📦 Installing: {to_install}")
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "install"] + to_install,
+            [_get_python_exe(), "-m", "pip", "install"] + to_install,
             capture_output=True, text=True,
             encoding="utf-8", errors="replace",
             timeout=120, cwd=str(project_dir)
@@ -295,7 +300,7 @@ def _run_project(run_command: str, project_dir: Path, timeout: int = 30) -> str:
     try:
         parts = run_command.split()
         if parts[0].lower() == "python":
-            parts[0] = sys.executable
+            parts[0] = _get_python_exe()
 
         result = subprocess.run(
             parts,
@@ -336,7 +341,7 @@ def _try_auto_install(error_output: str, project_dir: Path) -> bool:
     print(f"[DevAgent] 🔧 Auto-installing missing package: {pkg}")
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", pkg],
+            [_get_python_exe(), "-m", "pip", "install", pkg],
             capture_output=True, text=True,
             encoding="utf-8", errors="replace",
             timeout=60, cwd=str(project_dir)

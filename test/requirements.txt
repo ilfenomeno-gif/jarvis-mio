@@ -1,0 +1,5 @@
+psutil
+requests
+pyautogui
+send2trash
+feedparser

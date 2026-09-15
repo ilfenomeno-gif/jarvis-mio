@@ -60,7 +60,104 @@ Questa sezione viene aggiornata insieme alle modifiche del progetto e contiene s
 - Le trascrizioni cumulative Gemini Live vengono unite senza ripetere frammenti già ricevuti, riducendo echi e duplicazioni nel log e nella memoria di sessione.
 - Il prompt e le regole autorizzano opinioni personali motivate: JARVIS distingue giudizi da fatti e non inventa esperienze personali.
 - `core/intent_router.py` classifica i target come gioco/app, file/documento o ambiguo prima dell'esecuzione dei tool.
-- I titoli di gioco esatti passano al launcher corretto; i nomi parziali ambigui vengono bloccati con una domanda formale invece di essere cercati alla cieca.
+Per integrare queste funzioni direttamente come metodi nativi all'interno della classe principale del tuo assistente in jarvis-mio, puoi strutturare il codice creando una classe dedicata o aggiungendo i metodi direttamente al core del tuo Jarvis.
+
+Ecco come puoi implementare l'accessibilità (Screen Reader, OCR e comandi da tastiera) come funzioni interne native:
+
+Python
+import threading
+import time
+import keyboard
+import pyautogui
+import pytesseract
+from PIL import Image
+import pyttsx3
+
+class JarvisAccessibility:
+    def __init__(self, jarvis_instance=None):
+        self.jarvis = jarvis_instance  # Riferimento al core di Jarvis (se vuoi passare dati o loggare)
+        
+        # Inizializzazione del motore vocale nativo
+        self.engine = pyttsx3.init()
+        self.is_active = True
+        
+        # Configura i comandi nativi all'avvio del modulo
+        self._register_native_hotkeys()
+
+    def speak(self, text):
+        """Funzione nativa di Screen Reader / Sintesi Vocale."""
+        print(f"[Jarvis ScreenReader]: {text}")
+        # Gestione per evitare conflitti di thread con il TTS
+        self.engine.say(text)
+        self.engine.runAndWait()
+
+    def ocr_screen(self):
+        """Funzione nativa OCR: legge il testo visibile sullo schermo."""
+        self.speak("Analisi visiva dello schermo in corso...")
+        try:
+            screenshot = pyautogui.screenshot()
+            text = pytesseract.image_to_string(screenshot, lang='ita')
+            
+            if text.strip():
+                # Pulizia del testo e lettura
+                clean_text = " ".join(text.split())
+                self.speak("Ecco cosa ho trovato sullo schermo: " + clean_text[:300]) # Legge i primi 300 caratteri per evitare blocchi lunghi
+            else:
+                self.speak("Non ho rilevato alcun testo leggibile sullo schermo.")
+        except Exception as e:
+            self.speak("Errore durante l'acquisizione OCR dello schermo.")
+            print(f"Errore OCR: {e}")
+
+    def click_and_type(self, target_text, text_to_type):
+        """Funzione nativa di interazione: cerca un testo sullo schermo e ci interagisce."""
+        self.speak(f"Cerco l'elemento {target_text} sullo schermo...")
+        # Nota: Qui puoi integrare una ricerca basata su OCR per trovare le coordinate del testo
+        # Per semplicità, simuliamo un'azione rapida da tastiera/mouse
+        pyautogui.write(text_to_type)
+        self.speak("Fatto.")
+
+    def _register_native_hotkeys(self):
+        """Registra le scorciatoie globali che attivano le funzioni native di Jarvis."""
+        try:
+            # Ctrl + Alt + R -> Attiva la lettura OCR dello schermo
+            keyboard.add_hotkey('ctrl+alt+r', self.ocr_screen)
+            
+            # Ctrl + Alt + S -> Legge lo stato di Jarvis
+            keyboard.add_hotkey('ctrl+alt+s', lambda: self.speak("I sistemi di accessibilità di Jarvis sono operativi."))
+            
+            print("[Jarvis] Scorciatoie di accessibilità native registrate con successo.")
+        except Exception as e:
+            print(f"Impossibile registrare le hotkey globali: {e}")
+
+    def run_listener(self):
+        """Mantiene attivo il listener dei comandi da tastiera in background."""
+        while self.is_active:
+            time.sleep(1)
+
+# Esempio di integrazione nel main del tuo progetto jarvis-mio
+if __name__ == "__main__":
+    print("Avvio del core di Jarvis con modulo di accessibilità nativo...")
+    
+    # Inizializza il modulo
+    accessibility = JarvisAccessibility()
+    accessibility.speak("Jarvis online con supporto accessibilità integrato.")
+    
+    # Avvia il loop di ascolto tastiera in un thread separato per non bloccare l'assistente
+    listener_thread = threading.Thread(target=accessibility.run_listener, daemon=True)
+    listener_thread.start()
+    
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        accessibility.is_active =iccation = False
+        print("Arresto di Jarvis in corso...")
+Come collegarlo alla struttura esistente di jarvis-mio:
+Crea un file accessibility.py (o inserisci la classe JarvisAccessibility dentro i tuoi moduli esistenti).
+
+Istanzialo nel file principale (es. main.py o jarvis.py) quando avvii l'applicazione.
+
+Usando threading, il sistema di scorciatoie da tastiera (ctrl+alt+r per l'OCR dello schermo, ecc.) girerà in background permettendoti di richiamare le funzioni di accessibilità in qualsiasi momento, indipendentemente da cosa sta facendo il resto del programma.- I titoli di gioco esatti passano al launcher corretto; i nomi parziali ambigui vengono bloccati con una domanda formale invece di essere cercati alla cieca.
 - Una categoria esplicitamente pronunciata dall'utente viene salvata in `memory/long_term.json` come associazione persistente `target_intent_<nome>`; i test usano mock e non modificano la memoria reale.
 - Le ricerche generiche non possono più assorbire una richiesta esplicita di gioco, e i tool file non indovinano in caso ambiguo.
 - `file_controller.py` indicizza automaticamente ogni file trovato o letto con chiavi `file_path_<nome>` e percorso assoluto in memoria lunga.

@@ -494,7 +494,12 @@ def computer_control(
                 time.sleep(0.2)
                 _click(x=coords[0], y=coords[1])
                 return f"Clicked '{desc}' at {coords}"
-            return f"Element not found on screen: '{desc}'"
+            try:
+                from actions.screen_processor import screen_process
+                screen_process({"text": f"L'agente non trova '{desc}' sullo schermo. Descrivi cosa c'è attualmente visibile per aiutare."})
+            except Exception:
+                pass
+            return f"Element not found on screen: '{desc}'. Triggered automatic screen analysis."
 
         if action == "wait":
             secs = float(params.get("seconds", 1.0))

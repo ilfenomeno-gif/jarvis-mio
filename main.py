@@ -68,6 +68,12 @@ from actions.file_controller   import file_controller
 from actions.code_helper       import code_helper
 from actions.dev_agent         import dev_agent
 from actions.web_search        import web_search as web_search_action
+from actions.large_file_reader import large_file_action
+from actions.proxy_launcher    import proxy_launcher_action
+from agents.supervisor_agent   import supervisor_action
+from agents.research_agent     import research_action
+from agents.coder_agent        import coder_action
+from agents.debugger_agent     import debugger_action
 from actions.computer_control  import computer_control
 from actions.game_updater      import game_updater
 from actions.system_monitor    import SystemMonitor, get_system_status
@@ -89,6 +95,7 @@ from core.guardrails           import (
     install_subprocess_guards, require_policy_file, append_rule,
 )
 from core.accessibility        import ocr_screen_region
+from core.accessibility        import AccessibilityController
 
 install_subprocess_guards()
 
@@ -497,6 +504,77 @@ TOOL_DECLARATIONS = [
         }
     },
     {
+        "name": "supervisor_agent",
+        "description": "Multi-agent coordinator. Breaks down complex tasks (coding projects, research, builds) into step-by-step plans for sub-agents. Use for complex multi-step autonomous workflows.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "task": {"type": "STRING", "description": "Full description of the complex task to plan and execute."},
+            },
+            "required": ["task"]
+        }
+    },
+    {
+        "name": "research_agent",
+        "description": "Research agent. Searches for technical documentation, API references, and code examples for a given topic.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "topic": {"type": "STRING", "description": "The technical topic or API to research."},
+            },
+            "required": ["topic"]
+        }
+    },
+    {
+        "name": "coder_agent",
+        "description": "Coder agent. Writes production-quality code to a local file based on a task description and optional research context.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "task":      {"type": "STRING", "description": "What to code."},
+                "context":   {"type": "STRING", "description": "Optional research context or API documentation."},
+                "file_path": {"type": "STRING", "description": "Absolute path where to write the code file."},
+            },
+            "required": ["task", "file_path"]
+        }
+    },
+    {
+        "name": "debugger_agent",
+        "description": "Debugger agent. Runs a command (compile/test/execute), intercepts errors, and returns an AI-generated fix suggestion.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "command": {"type": "STRING", "description": "Shell command to run, e.g. 'python main.py'."},
+                "cwd":     {"type": "STRING", "description": "Working directory for the command."},
+            },
+            "required": ["command"]
+        }
+    },
+    {
+        "name": "large_file_reader",
+        "description": "Reads very large files (txt, log, code, etc.) in streaming chunks and processes each chunk with an AI instruction. Use this when a file is too big to read in one shot.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "file_path":   {"type": "STRING", "description": "Absolute path to the file to read."},
+                "instruction": {"type": "STRING", "description": "What to do with each chunk (e.g. 'Summarize', 'Find errors', 'Extract names')."},
+            },
+            "required": ["file_path"]
+        }
+    },
+    {
+        "name": "proxy_launcher",
+        "description": "Runs a shell command in a subprocess bypassing pythonw.exe whitelist restrictions. Use for build commands, compilation, or any system-level execution.",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "command": {"type": "STRING", "description": "Command to run, e.g. 'python build.py' or 'npm install'."},
+                "cwd":     {"type": "STRING", "description": "Working directory."},
+            },
+            "required": ["command"]
+        }
+    },
+    {
         "name": "computer_control",
         "description": "Direct computer control: type, click, hotkeys, scroll, move mouse, screenshots, find elements on screen.",
         "parameters": {
@@ -839,6 +917,9 @@ class JarvisLive:
         self._session_log: list[str] = []          # conversation turns for end-of-session summary
         self._last_user_text = ""                  # latest transcript for intent routing
         self._prompt_router = PromptRouter()
+        # Native accessibility methods are available immediately, while global
+        # hotkeys remain opt-in through start_accessibility_hotkeys().
+        self.accessibility = AccessibilityController(speech=self)
 
         self._enhanced_live = True  # affective dialog + proactive audio; auto-disabled if the server rejects them
         _core_names = {t["name"] for t in TOOL_DECLARATIONS}
@@ -849,6 +930,30 @@ class JarvisLive:
         )
         self.ui.get_plugins = self._plugin_registry.list_for_ui
         self.ui.request_say = self.plugin_say   # plugins: mid-task speech channel
+
+    def accessibility_speak(self, text: str) -> None:
+        """Speak a short accessibility status through JARVIS's active session."""
+        self.accessibility.speak(text)
+
+    def ocr_screen(self, bbox=None, language: str = "ita") -> str:
+        """Read visible screen text through the native accessibility controller."""
+        return self.accessibility.read_screen(bbox=bbox, language=language)
+
+    def click_and_type(self, target_text: str, text_to_type: str) -> bool:
+        """Find a visible OCR label, focus it, and type only after a match."""
+        return self.accessibility.click_and_type(target_text, text_to_type)
+
+    def start_accessibility_hotkeys(
+        self,
+        read_combination: str = "ctrl+alt+r",
+        status_combination: str = "ctrl+alt+s",
+    ) -> None:
+        """Enable global accessibility shortcuts explicitly."""
+        self.accessibility.start_hotkeys(read_combination, status_combination)
+
+    def stop_accessibility_hotkeys(self) -> None:
+        """Remove global accessibility shortcuts."""
+        self.accessibility.stop_hotkeys()
 
     def plugin_say(self, instruction: str) -> None:
         """
@@ -1226,6 +1331,30 @@ class JarvisLive:
 
             elif name == "dev_agent":
                 r = await loop.run_in_executor(None, lambda: dev_agent(parameters=args, player=self.ui, speak=self.speak))
+                result = r or "Done."
+
+            elif name == "supervisor_agent":
+                r = await loop.run_in_executor(None, lambda: supervisor_action(parameters=args, player=self.ui))
+                result = r or "Done."
+
+            elif name == "research_agent":
+                r = await loop.run_in_executor(None, lambda: research_action(parameters=args, player=self.ui))
+                result = r or "Done."
+
+            elif name == "coder_agent":
+                r = await loop.run_in_executor(None, lambda: coder_action(parameters=args, player=self.ui))
+                result = r or "Done."
+
+            elif name == "debugger_agent":
+                r = await loop.run_in_executor(None, lambda: debugger_action(parameters=args, player=self.ui))
+                result = r or "Done."
+
+            elif name == "large_file_reader":
+                r = await loop.run_in_executor(None, lambda: large_file_action(parameters=args, player=self.ui))
+                result = r or "Done."
+
+            elif name == "proxy_launcher":
+                r = await loop.run_in_executor(None, lambda: proxy_launcher_action(parameters=args, player=self.ui))
                 result = r or "Done."
 
             elif name == "web_search":

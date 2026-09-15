@@ -35,11 +35,26 @@ def _get_api_key() -> str:
 
 def _gemini_client():
     from google import genai
+    import time
     _c = genai.Client(api_key=_get_api_key())
 
     class _W:
         def generate_content(self, contents):
-            return _c.models.generate_content(model="gemini-flash-latest", contents=contents)
+            max_retries = 3
+            backoff = 2
+            for attempt in range(max_retries):
+                try:
+                    return _c.models.generate_content(model="gemini-flash-latest", contents=contents)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise e
+                    msg = str(e).lower()
+                    if "429" in msg or "quota" in msg or "503" in msg or "timeout" in msg or "unavailable" in msg:
+                        print(f"[FileProcessor] API error, retrying in {backoff}s...")
+                        time.sleep(backoff)
+                        backoff *= 2
+                    else:
+                        raise e
 
     return _W()
 
